@@ -5,46 +5,405 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AgroPredict | Upload</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}">
+  <style>
+    /* Results Modal Styles */
+    .results-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: auto;
+      padding: 0;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 700px;
+      animation: slideUp 0.4s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 20px 20px 0 0;
+      text-align: center;
+      border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: bold;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .close-btn {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: rotate(90deg);
+    }
+
+    .modal-body {
+      padding: 40px 30px;
+      background: white;
+      color: #333;
+    }
+
+    .result-section {
+      margin-bottom: 30px;
+    }
+
+    .result-image-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .result-image {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+      border: 3px solid #667eea;
+    }
+
+    .disease-card {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      padding: 25px;
+      border-radius: 15px;
+      color: white;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px rgba(245, 87, 108, 0.2);
+      animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .disease-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .confidence-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.3);
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .confidence-bar {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #45a049);
+      border-radius: 10px;
+      transition: width 1.5s ease-out;
+      animation: fillBar 1.5s ease-out;
+    }
+
+    @keyframes fillBar {
+      from {
+        width: 0%;
+      }
+      to {
+        width: var(--confidence-width);
+      }
+    }
+
+    .prevention-section {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      padding: 25px;
+      border-radius: 15px;
+      color: white;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+
+    .prevention-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    .prevention-title::before {
+      content: "🛡️";
+      margin-right: 10px;
+      font-size: 20px;
+    }
+
+    .prevention-text {
+      font-size: 15px;
+      line-height: 1.6;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-healthy {
+      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    }
+
+    .status-warning {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .modal-footer {
+      padding: 20px 30px;
+      background: #f8f9fa;
+      border-radius: 0 0 20px 20px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      animation: fadeInUp 0.6s ease-out 0.6s both;
+    }
+
+    .btn-new-upload {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-new-upload:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    .btn-home {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-home:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+
+    /* Existing styles for upload area */
+    .upload-form {
+      margin: 30px 0;
+    }
+
+    .file-input, .upload-btn {
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin: 10px;
+    }
+
+    .upload-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .upload-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+  </style>
 </head>
 <body>
   <div class="upload-container">
-    <h1>AI Coffee Leaf Analysis</h1>
+    <h1>🌿 AI Coffee Leaf Analysis</h1>
 
     <div class="welcome-message">
-      Welcome, {{session['user'] }}! Upload a coffee leaf image for disease analysis.
+      Welcome, <strong>{{session['user']}}</strong>! Upload a coffee leaf image for disease analysis.
     </div>
 
     {%with messages = get_flashed_messages() %}
       {% if messages %}
           <div class="flash-messages">
             {%for message in messages %}
-                {{ message }}
+                <div class="flash-message">{{ message }}</div>
             {% endfor %}
           </div>
       {% endif %}
     {% endwith %}
 
-    <div class="coming-soon">
-      AI Model Intergration Coming soon!<br>
-      <small>Currently testing the upload functionality</small>
-    </div>
-
     <form method="POST" enctype="multipart/form-data" class="upload-form">
       <input type="file" name="file" accept="image/*" class="file-input" required>
-      <button type="submit" class="upload-btn">Upload Image</button>
+      <button type="submit" class="upload-btn">📤 Upload Image</button>
     </form>
 
-    {% if filename %}
-    <div>
-      <h3>Uploaded Image:</h3>
-      <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded coffee leaf" class="uploaded-image">
+    <!-- Results Modal -->
+    {% if prediction %}
+    <div id="resultsModal" class="results-modal" style="display: block;">
+      <div class="modal-content">
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+        
+        <div class="modal-header">
+          <h2>✨ Analysis Complete!</h2>
+        </div>
+
+        <div class="modal-body">
+          
+          <!-- Image Display -->
+          {% if filename %}
+          <div class="result-image-container">
+            <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
+                 alt="Analyzed coffee leaf" class="result-image">
+          </div>
+          {% endif %}
+
+          <!-- Disease Status -->
+          <div class="disease-card {% if prediction == 'Healthy Leaf' %}status-healthy{% else %}status-warning{% endif %}">
+            <div class="disease-name">
+              {% if prediction == 'Healthy Leaf' %}
+                ✅ {{ prediction }}
+              {% else %}
+                ⚠️ {{ prediction }}
+              {% endif %}
+            </div>
+            
+            <div class="confidence-badge">
+              Confidence: {{ confidence }}
+            </div>
+            
+            <div class="confidence-bar">
+              <div class="confidence-fill" 
+                   style="--confidence-width: {{ confidence }};">
+              </div>
+            </div>
+          </div>
+
+          <!-- Prevention Advice -->
+          {% if prevention %}
+          <div class="prevention-section">
+            <div class="prevention-title">Recommended Action</div>
+            <div class="prevention-text">
+              {{ prevention }}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Additional Info -->
+          <div class="result-section">
+            <p style="font-size: 14px; color: #666; text-align: center; margin-top: 20px;">
+              This analysis is powered by AI and should be verified by agricultural experts.
+            </p>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <button class="btn-new-upload" onclick="resetForm()">📤 Upload Another</button>
+          <a href="{{ url_for('home') }}" class="btn-home" style="text-decoration: none;">🏠 Home</a>
+        </div>
+      </div>
     </div>
     {% endif %}
 
+    <!-- Navigation -->
     <div class="navigation">
-      <a href="{{ url_for('home') }}" class="nav-btn">Home</a>
-      <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
+      <a href="{{ url_for('home') }}" class="nav-btn">🏠 Home</a>
+      <a href="{{ url_for('logout') }}" class="nav-btn">🚪 Logout</a>
     </div>
-  </div>   
+  </div>
+
+  <script>
+    function closeModal() {
+      document.getElementById('resultsModal').style.display = 'none';
+    }
+
+    function resetForm() {
+      // Redirect to upload page to refresh
+      window.location.href = "{{ url_for('upload') }}";
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const modal = document.getElementById('resultsModal');
+      if (event.target == modal) {
+        closeModal();
+      }
+    }
+
+    // Escape key closes modal
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeModal();
+      }
+    });
+  </script>
 </body>
 </html>
