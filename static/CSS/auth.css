@@ -1,0 +1,144 @@
+/* auth.css */
+body {
+  font-family: "Poppins", sans-serif;
+  background: url('../images/bk_2.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  padding: 20px;
+}
+
+/* Container layout */
+.auth-container {
+  padding: 40px;
+  text-align: center;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 400px;
+  width: 100%;
+}
+
+.auth-container h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  color: #facc15;
+}
+
+.auth-container p {
+  margin-bottom: 30px;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Form styles */
+form {
+  width: 100%;
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.auth-container input:focus {
+  background: white;
+  box-shadow: 0 0 0 2px #facc15;
+}
+
+.flash-messages{
+  margin: 15px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.flash-success{
+  background: rgba(76, 175, 80,0.2);
+  color: #4CAF50;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 4px solid #4CAF50;
+}
+
+.flash-error{
+  background: rgba(244,67,54,0.2);
+  color: #f44336;
+  border-radius: 5px;
+  border-left: 4px solid #f44336;
+}
+
+/* Button styles */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+button {
+  background: #facc15;
+  color: #000;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: 0.3s;
+  font-weight: 600;
+  flex: 1;
+}
+
+button:hover {
+  background: #f59e0b;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+/* Link styles */
+a {
+  color: #facc15;
+  text-decoration: none;
+  display: block;
+  margin-top: 25px;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+a:hover {
+  color: #f59e0b;
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 30px 20px;
+    margin: 20px;
+  }
+  
+  .buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .auth-container h1 {
+    font-size: 1.7rem;
+  }
+}

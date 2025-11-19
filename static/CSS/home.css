@@ -1,0 +1,132 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+   font-family: "Poppins", sans-serif;
+}
+.home-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  z-index: -1;
+  filter: brightness(0.6);
+}
+
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+  padding: 0 20px;
+  backdrop-filter: blur(1px);
+}
+
+.home-header {
+  margin-bottom: 40px;
+  animation: fadeInDown 1s ease forwards;
+}
+
+.home-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: white;
+   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.home-header p {
+  font-size: 1.2rem;
+  color: #f3f4f6cc;
+}
+
+.home-main {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 30px 25px;
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  max-width: 300px;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+}
+.card h3 {
+  margin-bottom: 10px;
+  color: #facc15;
+}
+
+.card p {
+  color: #f9fafbcc;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.home-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+}
+
+
+.home-footer button {
+  background: #facc15;
+  color: #1a1a1a;
+  border: none;
+  padding: 15px 45px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.home-footer button:hover {
+  transform: scale(1.1);
+  background: #f59e0b;
+}
+
+.image-row {
+  display: flex;
+  gap: 30px;
+  margin-top: 30px;
+  justify-content: center;
+}
+
+.home-image {
+  width: 100px;
+  height: auto;
+  border-radius: 10px;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: transform 0.3s ease;
+}
+.home-image:hover {
+  transform: scale(1.1);
+  opacity: 1;
+}
+
+@keyframes fadeInDown {
+  from {opacity: 0; transform: translateY(-20px);}
+  to {opacity: 1; transform: translateY(0);}
+}

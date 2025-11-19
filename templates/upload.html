@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroPredict | Upload</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}">
+</head>
+<body>
+  <div class="upload-container">
+    <h1>AI Coffee Leaf Analysis</h1>
+
+    <div class="welcome-message">
+      Welcome, {{session['user'] }}! Upload a coffee leaf image for disease analysis.
+    </div>
+
+    {%with messages = get_flashed_messages() %}
+      {% if messages %}
+          <div class="flash-messages">
+            {%for message in messages %}
+                {{ message }}
+            {% endfor %}
+          </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="coming-soon">
+      AI Model Intergration Coming soon!<br>
+      <small>Currently testing the upload functionality</small>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="upload-form">
+      <input type="file" name="file" accept="image/*" class="file-input" required>
+      <button type="submit" class="upload-btn">Upload Image</button>
+    </form>
+
+    {% if filename %}
+    <div>
+      <h3>Uploaded Image:</h3>
+      <img src="{{ url_for('static', filename='uploads/' + filename) }}" alt="Uploaded coffee leaf" class="uploaded-image">
+    </div>
+    {% endif %}
+
+    <div class="navigation">
+      <a href="{{ url_for('home') }}" class="nav-btn">Home</a>
+      <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
+    </div>
+  </div>   
+</body>
+</html>

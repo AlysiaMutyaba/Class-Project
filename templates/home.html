@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang ="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name = "viewport" content="width=device-width, initial-scale=1"/>
+    <title>AgroPredict | Home</title>
+    <link rel ="stylesheet" href="{{ url_for('static', filename='CSS/home.css') }}"/>
+</head>
+<body>
+    <div class="home-container">
+        <img src = "{{ url_for('static', filename='images/coffee.jpg') }}" alt="background" class="home-background"/>
+
+        <header class="home-header">
+            <h1>Welcome To AgroPredict</h1>
+            <p>Predicting Coffee Plant Disease with AI!</p>
+        </header>
+
+        <main class = "home-main">
+            <div class = "card">
+                <h3>Analyze Coffee Leaves</h3>
+                <p>Upload a Picture and get instant AI predictions.</p>
+            </div>
+            <div class ="card">
+                <h3>Get Expert Insights</h3>
+                <p>Receive tailored advice to help protect and improve your crops.</p>
+            </div>
+        </main>
+
+        <footer class="home-footer">
+            <button id="registerbtn" type="button">Register</button>
+            <div class="image-row">
+                <img src="{{ url_for('static', filename='images/chip.png') }}" alt="Coffee plants" class="home-image">
+            </div>
+        </footer>
+
+    </div>
+
+    <script>
+        document.getElementById('registerbtn').addEventListener("click", () => {
+            window.location.href = "{{ url_for('auth') }}";
+        });
+    </script>
+</body>
+</html>
