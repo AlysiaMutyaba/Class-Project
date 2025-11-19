@@ -3,45 +3,37 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environments
-venv/
-.env/
+# Virtual Environment
 .venv/
+venv/
 env/
 ENV/
 
 # Python packaging / build artifacts
 build/
 dist/
+downloads/
 *.egg-info/
 pip-wheel-metadata/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE/editor settings
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
-
-# OS files
-.DS_Store
-Thumbs.db
 *.swp
-
-# Flask / application artifacts
-instance/
-static/uploads/
-users.db
-*.sqlite3
-
-# Model weights / large binaries (keep out of repo)
-model/*.pkl
-*.h5
-*.pt
-*.pth
-*.ckpt
+*.swo
+*~
+.DS_Store
 
 # Logs, coverage, test caches
 *.log
+logs/
 .coverage
 .pytest_cache/
 
@@ -51,3 +43,20 @@ model/*.pkl
 # Environment files / secrets
 *.env
 .env.*
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Model weights / large binaries (keep out of repo)
+model/*.pkl
+*.h5
+*.pt
+*.pth
+*.ckpt
+
+# Temporary
+*.tmp
+*.temp
+~*
