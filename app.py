@@ -70,15 +70,15 @@ def allowed_file(filename):
 DISEASE_INFO = {
     'Healthy': {
         'name': 'Healthy Leaf',
-        'prevention': 'Continue good practices'
+        'prevention': 'Continue good practices. Providing the right balance of water, light, temperature and humidity is important.'
     },
     'Coffee_rust': {
         'name': 'Coffee Leaf Rust',
-        'prevention': 'Apply fungicides regularly'
+        'prevention': 'Appropriate fertilization, mositure control and cautious use of fungicides, aiming to enhance plant health.'
     },
-    'Coffee_red_spider_mite ': {  # NOTE: Space at end to match vocab!
+    'Coffee_red_spider_mite ': { 
         'name': 'Coffee Red Spider Mite',
-        'prevention': 'Apply acaricide and maintain humidity'
+        'prevention': 'Mist your plants regularly, especially during dry months, and use a humidifier if necessary.'
     }
 }
 

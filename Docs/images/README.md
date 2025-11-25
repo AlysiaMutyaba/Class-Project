@@ -149,19 +149,19 @@ scrot ~/Class-Project/docs/images/screenshot.png
 
 ### Homepage
 
-![AgroPredict Homepage](./docs/images/homepage.png)
+![AgroPredict Homepage](./docs/homepage.png)
 
 ### Login Page
 
-![Authentication Page](./docs/images/login.png)
+![Authentication Page](./docs/login.png)
 
 ### Upload Interface
 
-![Image Upload](./docs/images/upload.png)
+![Image Upload](./docs/upload.png)
 
 ### Prediction Results
 
-![Disease Prediction](./docs/images/prediction.png)
+![Disease Prediction](./docs/Prediction.jpg)
 ```
 
 ---
