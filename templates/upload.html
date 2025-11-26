@@ -4,78 +4,86 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AgroPredict | Upload</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}"> 
-  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/results-model.css')}}">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/results-model.css') }}">
 </head>
+
 <body>
+  <!-- Main Container -->
   <div class="upload-container">
+    
+    <!-- Header -->
     <h1>AI Coffee Leaf Analysis</h1>
 
+    <!-- Welcome Message -->
     <div class="welcome-message">
-      Welcome, <strong>{{session['user']}}</strong>! Upload a coffee leaf image for disease analysis.
+      Welcome, <strong>{{session['user']}}</strong>! 
+      Upload a coffee leaf image for disease analysis.
     </div>
 
-    {%with messages = get_flashed_messages() %}
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
       {% if messages %}
-          <div class="flash-messages">
-            {%for message in messages %}
-                <div class="flash-message">{{ message }}</div>
-            {% endfor %}
-          </div>
+        <div class="flash-messages">
+          {% for message in messages %}
+            <div class="flash-message">{{ message }}</div>
+          {% endfor %}
+        </div>
       {% endif %}
     {% endwith %}
 
+    <!-- Upload Form -->
     <form method="POST" enctype="multipart/form-data" class="upload-form">
-      <input type="file" name="file" accept="image/*" class="file-input" required>
+      <input 
+        type="file" 
+        name="file" 
+        accept="image/*" 
+        class="file-input" 
+        required
+      >
       <button type="submit" class="upload-btn">Upload Image</button>
     </form>
 
-    <!-- Results Model -->
+    <!-- Results Modal -->
     {% if prediction %}
     <div id="resultsModal" class="results-modal" style="display: block;">
       <div class="modal-content">
-        <button class="close-btn" onclick="closeModal()">&times;</button>
         
+        <!-- Close Button -->
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+
+        <!-- Modal Header -->
         <div class="modal-header">
-          <h2>Analysis Complete!</h2>
+          <h2>Analysis complete</h2>
         </div>
 
+        <!-- Modal Body -->
         <div class="modal-body">
           
-          <!-- Image Display -->
+          <!-- Image -->
           {% if filename %}
           <div class="result-image-container">
-            <img src="{{ url_for('static', filename='uploads/' + filename) }}" 
-                 alt="Analyzed coffee leaf" class="result-image">
+            <img 
+              src="{{ url_for('static', filename='uploads/' + filename) }}" 
+              alt="Analyzed coffee leaf" 
+              class="result-image"
+            >
           </div>
           {% endif %}
 
-          <!-- Disease Status -->
-          <div class="result-card {% if prediction == 'Healthy Leaf' %}status-healthy{% else %}status-warning{% endif %}">
-            <div class="disease-name">
-              {% if prediction == 'Healthy Leaf' %}
-                 {{ prediction }}
-              {% else %}
-                 {{ prediction }}
-              {% endif %}
-            </div>
-            
-            <div class="confidence-badge">
-              Confidence: {{ confidence }}
-            </div>
-            
-            <div class="confidence-bar">
-              <div class="confidence-fill" 
-                   style="--confidence-width: {{ confidence }};">
-              </div>
-            </div>
-          </div>
+          <!-- Disease Name -->
+          <h3 class="disease-name">{{ prediction }}</h3>
 
-          <!-- Prevention Advice -->
+          <!-- Confidence -->
+          <p class="confidence-badge">Confidence: {{ confidence }}</p>
+
+          <!-- Recommendation -->
           {% if prevention %}
-          <div class="result-card recommedation-section">
-            <div class="recommendation-label">Recommended Action</div>
-            <div class ="recommendation-text">{{ prevention }}</div>
+          <div class="recommendation-section">
+            <h3 class="recommendation-label">Recommended Action</h3>
+            <p class="recommendation-text">{{ prevention }}</p>
           </div>
           {% endif %}
 
@@ -83,44 +91,70 @@
 
         <!-- Modal Footer -->
         <div class="modal-footer">
-          <button class="btn-new-upload" onclick="resetForm()"> Upload Another</button>
-          <a href="{{ url_for('home') }}" class="btn-home" style="text-decoration: none;">Home</a>
+          <button 
+            class="btn-new-upload" 
+            onclick="resetForm()"
+          >
+            Upload Another
+          </button>
+          <a 
+            href="{{ url_for('home') }}" 
+            class="btn-home"
+          >
+            Home
+          </a>
         </div>
+
       </div>
     </div>
     {% endif %}
 
     <!-- Navigation -->
     <div class="navigation">
-      <a href="{{ url_for('home') }}" class="nav-btn"> Home</a>
-      <a href="{{ url_for('logout') }}" class="nav-btn"> Logout</a>
+      <a href="{{ url_for('home') }}" class="nav-btn">Home</a>
+      <a href="{{ url_for('logout') }}" class="nav-btn">Logout</a>
     </div>
+
   </div>
 
+  <!-- JavaScript -->
   <script>
+    /**
+     * Close modal function
+     */
     function closeModal() {
-      document.getElementById('resultsModal').style.display = 'none';
+      const modal = document.getElementById('resultsModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
     }
 
+    /**
+     * Reset and reload upload page
+     */
     function resetForm() {
-      // Redirect to upload page to refresh
       window.location.href = "{{ url_for('upload') }}";
     }
 
-    // Close modal when clicking outside
+    /**
+     * Close modal when clicking outside
+     */
     window.onclick = function(event) {
       const modal = document.getElementById('resultsModal');
-      if (event.target == modal) {
+      if (event.target === modal) {
         closeModal();
       }
     }
 
-    // Escape key closes modal
+    /**
+     * Close modal on Escape key
+     */
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape') {
         closeModal();
       }
     });
   </script>
+
 </body>
 </html>
