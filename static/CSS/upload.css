@@ -6,6 +6,7 @@ body{
   margin: 0;
   padding: 20px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 .upload-container{
   max-width: 600px;
@@ -31,14 +32,28 @@ h1{
 }
 .file-input{
   width: 100%;
-  padding: 15px;
-  margin: 15px 0;
+  padding: 10px;
+  margin: 15px 4;
   border: 2px dashed #facc15;
   border-radius: 10px;
   background: rgba(255,255,255,0.1);
   color: white;
   font-size: 1rem;
   cursor: pointer;
+}
+.file-input::file-selector-button {
+    background: #facc15;
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.file-input::file-selector-button:hover {
+    background: #f59e0b;
 }
 .upload-btn{
   background: #facc15;
@@ -90,13 +105,4 @@ h1{
   padding: 10px;
   background: rgba(255,255,255,0.1);
   border-radius: 5px;
-}
-.coming-soon{
-  color: #facc15;
-  font-size: 1.2rem;
-  margin: 20px 0;
-  padding: 15px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-  border-left: 4px solid #facc15;
 }
