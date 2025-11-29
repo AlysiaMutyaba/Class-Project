@@ -33,13 +33,15 @@ h1{
 .file-input{
   width: 100%;
   padding: 10px;
-  margin: 15px 4;
+  margin: 15px auto;
   border: 2px dashed #facc15;
   border-radius: 10px;
   background: rgba(255,255,255,0.1);
   color: white;
   font-size: 1rem;
   cursor: pointer;
+  display: block;
+  box-sizing: border-box;
 }
 .file-input::file-selector-button {
     background: #facc15;
