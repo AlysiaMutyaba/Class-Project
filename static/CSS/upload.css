@@ -1,6 +1,6 @@
 body{
   font-family: "Poppins", sans-serif;
-  background: url('../images/bk1_image.jpg') no-repeat center center fixed;;
+  background: url('../images/bk1_image.jpg') no-repeat center center fixed;
   background-size: cover;
   color: #fff;
   margin: 0;
@@ -8,6 +8,7 @@ body{
   min-height: 100vh;
   overflow-x: hidden;
 }
+
 .upload-container{
   max-width: 600px;
   margin: 40px auto;
@@ -19,17 +20,21 @@ body{
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+
 h1{
   margin-bottom: 30px;
   color: #facc15;
 }
+
 .welcome-message{
   margin-bottom: 30px;
   font-size: 1.1rem;
 }
+
 .upload-form{
   margin: 30px 0;
 }
+
 .file-input{
   width: 100%;
   padding: 10px;
@@ -43,20 +48,23 @@ h1{
   display: block;
   box-sizing: border-box;
 }
+
 .file-input::file-selector-button {
-    background: #facc15;
-    color: #000;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
-    margin-right: 10px;
-    cursor: pointer;
-    font-weight: 600;
+  background: #facc15;
+  color: #000;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  margin-right: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
 }
 
 .file-input::file-selector-button:hover {
-    background: #f59e0b;
+  background: #f59e0b;
 }
+
 .upload-btn{
   background: #facc15;
   color: #000;
@@ -69,10 +77,12 @@ h1{
   transition: 0.3s;
   margin-top: 15px;
 }
+
 .upload-btn:hover{
   background: #f59e0b;
   transform: translateY(-2px);
 }
+
 .uploaded-image{
   max-width: 300px;
   max-height: 300px;
@@ -80,12 +90,15 @@ h1{
   margin: 15px 0;
   border: 3x solid #facc15
 }
+
 .navigation{
   margin-top: 30px;
   display: flex;
   justify-content: center;
   gap: 15px;
+  flex-wrap: wrap;
 }
+
 .nav-btn{
   background: transparent;
   color: #facc15;
@@ -96,15 +109,112 @@ h1{
   font-weight: 600;
   transition: 0.3s;
 }
+
 .nav-btn:hover{
   background: #facc15;
   color: #000;
 }
+
 .flash-messages{
-  color: #facc15;
   margin: 15px 0;
-  font-weight: bold;
-  padding: 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.flash-message {
+  padding: 15px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-align: center;
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flash-message.error {
+  background: #f3e6e8;
+  border-left: 4px solid #f44336;
+  color: #c62828;
+}
+
+.flash-message.success {
+  background: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  color: #1b5e20;
+}
+
+@media (max-width: 600px) {
+  .upload-container{
+    max-width: 95%;
+    margin: 20px auto;
+    padding: 25px;
+  }
+
+  h1{
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  .welcome-message{
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .upload-form{
+    margin: 20px 0;
+  }
+
+  .file-input{
+    padding: 8px;
+    margin: 12px auto;
+  }
+
+  .upload-btn{
+    padding: 12px 25px;
+    font-size: 1rem;
+  }
+
+  .navigation{
+    margin-top: 20px;
+    gap: 10px;
+  }
+
+  .nav-btn{
+    padding: 8px 15px;
+    font-size: 0.9rem;
+  }
+
+  .flash-message {
+    padding: 12px 15px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .upload-container{
+    padding: 18px;
+  }
+
+  h1{
+    font-size: 1.5rem;
+  }
+
+  .welcome-message{
+    font-size: 0.85rem;
+  }
+
+  .flash-message {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
 }

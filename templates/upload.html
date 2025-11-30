@@ -2,16 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
   <title>AgroPredict | Upload</title>
-  
-  <!-- Stylesheets -->
-  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='CSS/upload.css') }}"> 
   <link rel="stylesheet" href="{{ url_for('static', filename='CSS/results-model.css') }}">
 </head>
 
 <body>
-  <!-- Main Container -->
   <div class="upload-container">
     
     <!-- Header -->
@@ -19,16 +16,15 @@
 
     <!-- Welcome Message -->
     <div class="welcome-message">
-      Welcome, <strong>{{session['user']}}</strong>! 
-      Upload a coffee leaf image for disease analysis.
+      Welcome, <strong>{{session['user']}}</strong>! Upload a coffee leaf image for disease analysis.
     </div>
 
     <!-- Flash Messages -->
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="flash-messages">
-          {% for message in messages %}
-            <div class="flash-message">{{ message }}</div>
+          {% for category, message in messages %}
+            <div class="flash-message {{ category }}">{{ message }}</div>
           {% endfor %}
         </div>
       {% endif %}
@@ -62,7 +58,7 @@
         <!-- Modal Body -->
         <div class="modal-body">
           
-          <!-- Image -->
+          <!-- Uploaded Image -->
           {% if filename %}
           <div class="result-image-container">
             <img 
@@ -73,13 +69,13 @@
           </div>
           {% endif %}
 
-          <!-- Disease Name -->
+          <!-- Disease Classification -->
           <h3 class="disease-name">{{ prediction }}</h3>
 
-          <!-- Confidence -->
+          <!-- Confidence Score -->
           <p class="confidence-badge">Confidence: {{ confidence }}</p>
 
-          <!-- Recommendation -->
+          <!-- Prevention Recommendation -->
           {% if prevention %}
           <div class="recommendation-section">
             <h3 class="recommendation-label">Recommended Action</h3>
@@ -91,18 +87,8 @@
 
         <!-- Modal Footer -->
         <div class="modal-footer">
-          <button 
-            class="btn-new-upload" 
-            onclick="resetForm()"
-          >
-            Upload Another
-          </button>
-          <a 
-            href="{{ url_for('home') }}" 
-            class="btn-home"
-          >
-            Home
-          </a>
+          <button class="btn-new-upload" onclick="resetForm()">Upload Another</button>
+          <a href="{{ url_for('home') }}" class="btn-home">Home</a>
         </div>
 
       </div>
@@ -117,10 +103,10 @@
 
   </div>
 
-  <!-- JavaScript -->
+  <!-- Scripts -->
   <script>
     /**
-     * Close modal function
+     * Close results modal
      */
     function closeModal() {
       const modal = document.getElementById('resultsModal');
@@ -130,7 +116,7 @@
     }
 
     /**
-     * Reset and reload upload page
+     * Reset form and reload page
      */
     function resetForm() {
       window.location.href = "{{ url_for('upload') }}";

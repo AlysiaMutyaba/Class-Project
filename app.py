@@ -67,6 +67,49 @@ class User(db.Model):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
+def is_likely_leaf(image_path, green_threshold=0.12):
+    """
+    Simple heuristic check: compute ratio of pixels where G > R and G > B
+    and G is reasonably bright. Returns (bool, ratio).
+    
+    Args:
+        image_path: Path to the image file
+        green_threshold: Minimum ratio of green pixels required (0.0-1.0)
+    
+    Returns:
+        Tuple of (is_leaf: bool, green_ratio: float)
+    """
+    try:
+        print(f"[LEAF CHECK] Analyzing image at: {image_path}")
+        
+        with Image.open(image_path) as im:
+            # Resize for faster processing
+            im = im.convert("RGB").resize((224, 224))
+            arr = np.array(im).astype(np.float32) / 255.0
+            
+            # Extract color channels
+            r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+            
+            # Pixel is "green" if:
+            # 1. Green channel is dominant (G > R and G > B)
+            # 2. Green channel has reasonable brightness (G > 0.18)
+            green_mask = (g > r) & (g > b) & (g > 0.18)
+            
+            # Calculate green pixel ratio
+            green_ratio = float(np.sum(green_mask)) / (arr.shape[0] * arr.shape[1])
+            
+            is_leaf = green_ratio >= green_threshold
+            
+            print(f"[LEAF CHECK] Green pixel ratio: {green_ratio:.3f} (threshold: {green_threshold})")
+            print(f"[LEAF CHECK] Result: {'✓ LIKELY A LEAF' if is_leaf else '✗ NOT A LEAF'}")
+            
+            return is_leaf, green_ratio
+            
+    except Exception as e:
+        print(f"[LEAF CHECK ERROR] Analysis failed: {e}")
+        traceback.print_exc()
+        return False, 0.0
+
 DISEASE_INFO = {
     'Healthy': {
         'name': 'Healthy Leaf',
@@ -159,6 +202,7 @@ def upload():
     prediction = None
     prevention = None
     confidence = None
+    not_leaf = False
 
     if request.method == 'POST':
         print(f"[UPLOAD] Processing POST request")
@@ -192,11 +236,35 @@ def upload():
             file.save(filepath)
             print(f"[UPLOAD] File saved to: {filepath}")
             
+            # ============================================
+            # LEAF DETECTION CHECK
+            # ============================================
+            print(f"[UPLOAD] Running leaf detection check...")
+            is_leaf, green_ratio = is_likely_leaf(filepath, green_threshold=0.12)
+            
+            if not is_leaf:
+                print(f"[UPLOAD] Image rejected - does not appear to be a leaf")
+                flash('The uploaded image does not appear to be a coffee leaf. Please upload a clear image of a coffee leaf.', 'error')
+                not_leaf = True
+                return render_template("upload.html", 
+                                     filename=filename, 
+                                     prediction=None, 
+                                     prevention=None, 
+                                     confidence=None, 
+                                     not_leaf=True)
+            
+            print(f"[UPLOAD] ✓ Image passed leaf detection")
+            
             # Check if model loaded
             if learn is None:
                 print(f"[UPLOAD ERROR] Model not loaded")
                 flash('Model not available', 'error')
-                return render_template("upload.html", filename=filename, prediction=prediction, prevention=prevention, confidence=confidence)
+                return render_template("upload.html", 
+                                     filename=filename, 
+                                     prediction=prediction, 
+                                     prevention=prevention, 
+                                     confidence=confidence,
+                                     not_leaf=False)
             
             # Load and predict
             try:
@@ -281,7 +349,12 @@ def upload():
                 print(f"[PREDICTION ERROR] Error type: {type(pred_error).__name__}")
                 traceback.print_exc()
                 flash(f'Prediction error: {str(pred_error)}', 'error')
-                return render_template("upload.html", filename=filename, prediction=None, prevention=None, confidence=None)
+                return render_template("upload.html", 
+                                     filename=filename, 
+                                     prediction=None, 
+                                     prevention=None, 
+                                     confidence=None,
+                                     not_leaf=False)
         
         except Exception as e:
             print(f"[UPLOAD ERROR] General error: {e}")
@@ -289,7 +362,12 @@ def upload():
             traceback.print_exc()
             flash(f'Upload error: {str(e)}', 'error')
 
-    return render_template("upload.html", filename=filename, prediction=prediction, prevention=prevention, confidence=confidence)
+    return render_template("upload.html", 
+                         filename=filename, 
+                         prediction=prediction, 
+                         prevention=prevention, 
+                         confidence=confidence,
+                         not_leaf=not_leaf)
 
 @app.route("/logout")
 def logout():
