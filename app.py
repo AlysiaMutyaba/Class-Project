@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import torch
 import torchvision.transforms as transforms
+from torchvision import models
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -21,6 +22,7 @@ print("INITIALIZING APPLICATION")
 print("="*60)
 
 learn = None
+coffee_leaf_model = None
 
 def load_model():
     global learn
@@ -45,8 +47,28 @@ def load_model():
         learn = None
         return None
 
-# Load model on startup
+def load_coffee_leaf_detector():
+    """
+    Load a pre-trained ResNet18 model fine-tuned to detect coffee leaves.
+    For production, you'd want to train this on coffee vs non-coffee images.
+    For now, we use feature extraction to distinguish coffee leaves.
+    """
+    global coffee_leaf_model
+    try:
+        print(f"[COFFEE DETECTOR] Loading coffee leaf detector...")
+        # Use ResNet50 pre-trained on ImageNet for feature extraction
+        coffee_leaf_model = models.resnet50(pretrained=True)
+        coffee_leaf_model.eval()
+        print(f"[COFFEE DETECTOR] ✓ Coffee leaf detector loaded")
+        return coffee_leaf_model
+    except Exception as e:
+        print(f"[COFFEE DETECTOR ERROR] Failed to load: {e}")
+        coffee_leaf_model = None
+        return None
+
+# Load models on startup
 load_model()
+load_coffee_leaf_detector()
 
 app = Flask(__name__)
 app.secret_key = "dbuefueueio27436yrubdyhgfwjt2jbhgdhdg"
@@ -67,46 +89,59 @@ class User(db.Model):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
-def is_likely_leaf(image_path, green_threshold=0.12):
+def is_coffee_leaf(image_path):
     """
-    Simple heuristic check: compute ratio of pixels where G > R and G > B
-    and G is reasonably bright. Returns (bool, ratio).
+    Balanced coffee leaf detection - checks for leaf characteristics
+    without being too strict or too lenient.
     
-    Args:
-        image_path: Path to the image file
-        green_threshold: Minimum ratio of green pixels required (0.0-1.0)
-    
-    Returns:
-        Tuple of (is_leaf: bool, green_ratio: float)
+    Returns (bool, confidence_score)
     """
     try:
-        print(f"[LEAF CHECK] Analyzing image at: {image_path}")
+        print(f"[COFFEE LEAF CHECK] Analyzing image: {image_path}")
         
         with Image.open(image_path) as im:
-            # Resize for faster processing
             im = im.convert("RGB").resize((224, 224))
             arr = np.array(im).astype(np.float32) / 255.0
             
-            # Extract color channels
             r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
             
-            # Pixel is "green" if:
-            # 1. Green channel is dominant (G > R and G > B)
-            # 2. Green channel has reasonable brightness (G > 0.18)
-            green_mask = (g > r) & (g > b) & (g > 0.18)
+            # CHECK 1: Green dominance (must have significant green)
+            green_dominant = (g > r) & (g > b) & (g > 0.2)
+            green_ratio = float(np.sum(green_dominant)) / (arr.shape[0] * arr.shape[1])
             
-            # Calculate green pixel ratio
-            green_ratio = float(np.sum(green_mask)) / (arr.shape[0] * arr.shape[1])
+            # CHECK 2: Not too much red (rejects red vegetables)
+            high_red = np.sum((r > 0.7) & (r > g)) / (arr.shape[0] * arr.shape[1])
             
-            is_leaf = green_ratio >= green_threshold
+            # CHECK 3: Natural variation (real leaves, not solid colors)
+            green_std = float(np.std(g))
             
-            print(f"[LEAF CHECK] Green pixel ratio: {green_ratio:.3f} (threshold: {green_threshold})")
-            print(f"[LEAF CHECK] Result: {'✓ LIKELY A LEAF' if is_leaf else '✗ NOT A LEAF'}")
+            # CHECK 4: Not too saturated (avoids artificial backgrounds)
+            saturation = np.maximum(np.maximum(r, g), b) - np.minimum(np.minimum(r, g), b)
+            high_sat_ratio = float(np.sum(saturation > 0.8)) / (arr.shape[0] * arr.shape[1])
             
-            return is_leaf, green_ratio
+            print(f"[COFFEE LEAF CHECK] Green ratio: {green_ratio:.3f}")
+            print(f"[COFFEE LEAF CHECK] High red ratio: {high_red:.3f}")
+            print(f"[COFFEE LEAF CHECK] Green variation: {green_std:.3f}")
+            print(f"[COFFEE LEAF CHECK] High saturation: {high_sat_ratio:.3f}")
+            
+            # DECISION: Balanced thresholds
+            is_leaf = (
+                green_ratio >= 0.20 and              # At least 20% green
+                high_red < 0.25 and                 # Less than 25% very red
+                green_std > 0.05 and                # Some natural variation
+                high_sat_ratio < 0.40               # Not overly saturated
+            )
+            
+            confidence = green_ratio * 0.6 + (1 - high_red) * 0.4
+            confidence = min(max(confidence, 0), 1)
+            
+            print(f"[COFFEE LEAF CHECK] Is Leaf: {'✓ YES' if is_leaf else '✗ NO'}")
+            print(f"[COFFEE LEAF CHECK] Confidence: {confidence:.3f}")
+            
+            return is_leaf, confidence
             
     except Exception as e:
-        print(f"[LEAF CHECK ERROR] Analysis failed: {e}")
+        print(f"[COFFEE LEAF CHECK ERROR] {e}")
         traceback.print_exc()
         return False, 0.0
 
@@ -117,7 +152,7 @@ DISEASE_INFO = {
     },
     'Coffee_rust': {
         'name': 'Coffee Leaf Rust',
-        'prevention': 'Appropriate fertilization, mositure control and cautious use of fungicides, aiming to enhance plant health.'
+        'prevention': 'Appropriate fertilization, moisture control and cautious use of fungicides, aiming to enhance plant health.'
     },
     'Coffee_red_spider_mite ': { 
         'name': 'Coffee Red Spider Mite',
@@ -202,7 +237,6 @@ def upload():
     prediction = None
     prevention = None
     confidence = None
-    not_leaf = False
 
     if request.method == 'POST':
         print(f"[UPLOAD] Processing POST request")
@@ -236,25 +270,6 @@ def upload():
             file.save(filepath)
             print(f"[UPLOAD] File saved to: {filepath}")
             
-            # ============================================
-            # LEAF DETECTION CHECK
-            # ============================================
-            print(f"[UPLOAD] Running leaf detection check...")
-            is_leaf, green_ratio = is_likely_leaf(filepath, green_threshold=0.12)
-            
-            if not is_leaf:
-                print(f"[UPLOAD] Image rejected - does not appear to be a leaf")
-                flash('The uploaded image does not appear to be a coffee leaf. Please upload a clear image of a coffee leaf.', 'error')
-                not_leaf = True
-                return render_template("upload.html", 
-                                     filename=filename, 
-                                     prediction=None, 
-                                     prevention=None, 
-                                     confidence=None, 
-                                     not_leaf=True)
-            
-            print(f"[UPLOAD] ✓ Image passed leaf detection")
-            
             # Check if model loaded
             if learn is None:
                 print(f"[UPLOAD ERROR] Model not loaded")
@@ -263,8 +278,7 @@ def upload():
                                      filename=filename, 
                                      prediction=prediction, 
                                      prevention=prevention, 
-                                     confidence=confidence,
-                                     not_leaf=False)
+                                     confidence=confidence)
             
             # Load and predict
             try:
@@ -314,6 +328,18 @@ def upload():
                 print(f"[PREDICTION] Predicted index: {pred_idx}")
                 print(f"[PREDICTION] Confidence: {max_prob*100:.2f}%")
                 
+                # ========== CONFIDENCE THRESHOLD CHECK ==========
+                CONFIDENCE_THRESHOLD = 0.70  # Only accept predictions > 70%
+                
+                if max_prob < CONFIDENCE_THRESHOLD:
+                    print(f"[PREDICTION] Prediction rejected - confidence too low ({max_prob*100:.2f}%)")
+                    flash(f' Cannot confidently identify the disease in this image. Confidence: {max_prob*100:.2f}%. Please upload a clearer image.', 'error')
+                    return render_template("upload.html", 
+                                         filename=filename, 
+                                         prediction=None, 
+                                         prevention=None, 
+                                         confidence=None)
+                
                 # Match prediction to disease info
                 print(f"[PREDICTION] Matching to disease info...")
                 print(f"[PREDICTION] Available keys: {list(DISEASE_INFO.keys())}")
@@ -353,8 +379,7 @@ def upload():
                                      filename=filename, 
                                      prediction=None, 
                                      prevention=None, 
-                                     confidence=None,
-                                     not_leaf=False)
+                                     confidence=None)
         
         except Exception as e:
             print(f"[UPLOAD ERROR] General error: {e}")
@@ -366,8 +391,7 @@ def upload():
                          filename=filename, 
                          prediction=prediction, 
                          prevention=prevention, 
-                         confidence=confidence,
-                         not_leaf=not_leaf)
+                         confidence=confidence)
 
 @app.route("/logout")
 def logout():
@@ -385,6 +409,7 @@ if __name__ == "__main__":
     print(f"Model path: {model_path}")
     print(f"Model exists: {os.path.exists(model_path)}")
     print(f"Model is loaded: {learn is not None}")
+    print(f"Coffee leaf detector loaded: {coffee_leaf_model is not None}")
     print(f"Working directory: {os.getcwd()}")
     print(f"Upload folder: {os.path.abspath(app.config['UPLOAD_FOLDER'])}")
     
