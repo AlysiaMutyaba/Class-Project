@@ -1,32 +1,31 @@
-# Use an official PyTorch image with CPU support
-FROM pytorch/pytorch:2.2.2-cpu
+# Use a stable lightweight Python image
+FROM python:3.10-slim
 
-# Install system dependencies
+# Set working directory inside the container
+WORKDIR /app
+
+# Copy requirements first for caching
+COPY requirements.txt .
+
+# Install system dependencies for PyTorch, FastAI, images, etc.
 RUN apt-get update && apt-get install -y \
-    python3-dev \
     build-essential \
+    python3-dev \
     libglib2.0-0 \
-    libgl1-mesa-glx \
     libsm6 \
     libxrender1 \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first
-COPY requirements.txt .
-
-# Install Python dependencies
+# Upgrade pip and install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Copy everything else into the container
+# Copy the rest of the project files
 COPY . .
 
-# Expose Flask port
+# Expose the port your Flask app uses
 EXPOSE 5000
 
-# Start the app using gunicorn
+# Command to run the Flask app with Gunicorn
 CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
