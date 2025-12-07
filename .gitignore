@@ -9,6 +9,8 @@ venv/
 env/
 ENV/
 
+.conda/
+
 # Python packaging / build artifacts
 build/
 dist/
@@ -42,7 +44,7 @@ logs/
 
 # Environment files / secrets
 *.env
-.env.*
+!.env.*
 
 # OS files
 Thumbs.db

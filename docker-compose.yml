@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  web:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - SECRET_KEY=change-me-please
+      - SQLALCHEMY_DATABASE_URI=postgresql://myuser:mypassword@db:5432/mydb
+      - FLASK_APP=app.py
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/app
+    restart: on-failure
+
+volumes:
+  db_data:

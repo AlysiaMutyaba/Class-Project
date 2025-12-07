@@ -10,9 +10,12 @@ from torchvision import models
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate, upgrade
+from sqlalchemy import text
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-from fastai.vision.all import PILImage, load_learner
+PILImage = None
+load_learner = None
 
 # Fix Windows path issue
 pathlib.PosixPath = pathlib.WindowsPath
@@ -26,6 +29,7 @@ coffee_leaf_model = None
 
 def load_model():
     global learn
+    global PILImage, load_learner
     model_path = os.path.join("model", "my_custom_cnn_windows.pkl")
     print(f"[MODEL] Loading model from: {model_path}")
     
@@ -34,6 +38,17 @@ def load_model():
         learn = None
         return None
     
+    # Import fastai lazily so the app can start even if fastai/torch imports fail
+    try:
+        from fastai.vision.all import PILImage as _PILImage, load_learner as _load_learner
+        PILImage = _PILImage
+        load_learner = _load_learner
+    except Exception as e:
+        print(f"[MODEL IMPORT ERROR] Failed to import fastai: {e}")
+        traceback.print_exc()
+        learn = None
+        return None
+
     try:
         learn = load_learner(model_path, cpu=True)
         print(f"[MODEL SUCCESS] FastAI model loaded successfully")
@@ -66,13 +81,18 @@ load_model()
 load_coffee_leaf_detector()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+# Use environment-provided SQLALCHEMY_DATABASE_URI, otherwise fall back to a local sqlite file
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "SQLALCHEMY_DATABASE_URI",
+    "sqlite:///instance/app.db"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # User Model
 class User(db.Model):
@@ -314,11 +334,46 @@ def logout():
 
 if __name__ == "__main__":
     with app.app_context():
+        # Attempt to run migrations (idempotent). If migrations are not present
+        # or upgrade fails, fall back to `db.create_all()` so the app still starts.
         try:
-            db.create_all()
-            print("Database initialized successfully")
+            # Use a Postgres advisory lock to avoid concurrent migration runs when
+            # multiple instances start at the same time (Railway or other hosts).
+            engine = db.engine
+            dialect_name = getattr(engine.dialect, 'name', None)
+
+            if dialect_name == 'postgresql':
+                lock_id = 389472391  # arbitrary constant lock id
+                conn = engine.connect()
+                try:
+                    conn.execute(text(f"SELECT pg_advisory_lock({lock_id})"))
+                    try:
+                        print("Running DB migrations (postgres + advisory lock)...")
+                        upgrade()
+                        print("Migrations applied (if any)")
+                    finally:
+                        conn.execute(text(f"SELECT pg_advisory_unlock({lock_id})"))
+                finally:
+                    conn.close()
+            else:
+                # Non-Postgres DBs: just try upgrade (may still work if Alembic configured)
+                try:
+                    print("Running DB migrations (non-postgres)...")
+                    upgrade()
+                    print("Migrations applied (if any)")
+                except Exception:
+                    # If migrations are not set up, fallback below
+                    raise
+
         except Exception as e:
-            print(f"Database error: {e}")
+            # If Alembic/Flask-Migrate isn't configured or migration fails,
+            # fall back to creating tables directly so the app can start.
+            print(f"Migration attempt failed or not configured: {e}")
+            try:
+                db.create_all()
+                print("Database initialized successfully via create_all()")
+            except Exception as e2:
+                print(f"Database error during create_all(): {e2}")
     
     print("Starting Flask app...")
     app.run(debug=True, use_reloader=False)

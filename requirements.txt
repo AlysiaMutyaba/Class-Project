@@ -1,7 +1,10 @@
-fastai==2.7.12
-torch==2.1.0
-torchvision==0.16.0
-torchaudio==2.1.0
+# Use the PyTorch CPU-only wheels to keep install size small.
+# The `-f` line points pip to the official CPU wheel index.
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+torch==2.2.0+cpu
+torchvision==0.17.0+cpu
+torchaudio==2.2.0+cpu
+fastai>=2.7.12
 
 Flask==2.3.3
 Flask-SQLAlchemy==3.0.5
@@ -9,7 +12,7 @@ Werkzeug==2.3.7
 SQLAlchemy==2.0.21
 
 Pillow
-numpy
+numpy<2
 pandas
 scikit-learn
 scipy
@@ -18,3 +21,7 @@ requests
 PyYAML
 cloudpickle
 gunicorn
+
+# Postgres driver and migrations
+psycopg2-binary
+Flask-Migrate
