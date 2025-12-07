@@ -1,13 +1,13 @@
-# Use a stable Python base
+# Use official Python 3.10 slim image
 FROM python:3.10-slim
 
-# Set working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy requirements first for caching
+# Copy requirements file
 COPY requirements.txt .
 
-# Install system dependencies needed for FastAI, PyTorch, SciPy, Matplotlib, image libraries, etc.
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     python3-dev \
@@ -17,15 +17,14 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the project files
+# Copy application code
 COPY . .
 
-# Expose the port your Flask app uses
+# Expose port (adjust if your app uses a different port)
 EXPOSE 5000
 
-# Command to run the Flask app with Gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "app:app"]
+# Default command to run the app
+CMD ["python", "app.py"]
