@@ -1,5 +1,5 @@
 # Use an official PyTorch image with CPU support
-FROM pytorch/pytorch:2.1.0-cpu
+FROM pytorch/pytorch:2.2.2-cpu
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
