@@ -3,8 +3,8 @@ Flask-SQLAlchemy==3.0.5
 Werkzeug==2.3.7
 SQLAlchemy==2.0.21
 fastai==2.7.12
-torch==2.0.1
-torchvision==0.15.2
+torch==2.5.1
+torchvision==0.20.1
 torchaudio==2.0.1
 Pillow==10.0.0
 numpy==1.24.3
