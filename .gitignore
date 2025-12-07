@@ -50,11 +50,11 @@ Thumbs.db
 desktop.ini
 
 # Model weights / large binaries (keep out of repo)
-model/*.pkl
-*.h5
-*.pt
-*.pth
-*.ckpt
+# model/*.pkl
+# *.h5
+# *.pt
+# *.pth
+# *.ckpt
 
 # Temporary
 *.tmp
