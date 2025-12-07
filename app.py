@@ -17,8 +17,11 @@ from werkzeug.utils import secure_filename
 PILImage = None
 load_learner = None
 
-# Fix Windows path issue
-pathlib.PosixPath = pathlib.WindowsPath
+# Fix Windows path issue (only apply on Windows hosts)
+# Some FastAI artifacts were created on Windows; avoid forcing WindowsPath
+# on POSIX systems which raises NotImplementedError during import.
+if os.name == 'nt' or sys.platform.startswith('win'):
+    pathlib.PosixPath = pathlib.WindowsPath
 
 print("="*60)
 print("INITIALIZING APPLICATION")
@@ -76,17 +79,19 @@ def load_coffee_leaf_detector():
         coffee_leaf_model = None
         return None
 
-# Load models on startup
-load_model()
-load_coffee_leaf_detector()
+# NOTE: Do NOT load heavy ML libraries at module import time. Flask's CLI
+# imports the app module for commands like `flask db init`. Loading FastAI
+# or torchvision weights during import can cause errors or slow startup.
+# Models are loaded lazily in the upload flow when needed.
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 # Use environment-provided SQLALCHEMY_DATABASE_URI, otherwise fall back to a local sqlite file
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
-    "SQLALCHEMY_DATABASE_URI",
-    "sqlite:///instance/app.db"
-)
+# Normalize common legacy scheme `postgres://` to SQLAlchemy-compatible `postgresql://`.
+db_uri = os.environ.get("SQLALCHEMY_DATABASE_URI", "sqlite:///instance/app.db")
+if isinstance(db_uri, str) and db_uri.startswith("postgres://"):
+    db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  
@@ -272,6 +277,10 @@ def upload():
         # =============================
         #        PREDICTION
         # =============================
+        # Ensure model is loaded lazily (avoid heavy imports during CLI commands)
+        if learn is None:
+            load_model()
+
         if learn is None:
             flash('Model not available', 'error')
             return render_template("upload.html", filename=filename)

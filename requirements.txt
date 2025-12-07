@@ -22,6 +22,8 @@ PyYAML
 cloudpickle
 gunicorn
 
+python-dotenv
+
 # Postgres driver and migrations
 psycopg2-binary
 Flask-Migrate
