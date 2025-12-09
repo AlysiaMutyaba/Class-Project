@@ -33,9 +33,12 @@ EXPOSE 5000
 # Entrypoint will wait for DB then exec the CMD
 # ENTRYPOINT ["./wait-for-db.sh"]
 
-# Default command to run the app via gunicorn with memory optimizations
-# Use 1 worker to reduce memory footprint (512MB free tier)
-# --timeout 300 for slow model loading on first request
-# --max-requests 100 to recycle worker and prevent memory leaks
-# --preload for loading model once before forking
-CMD ["gunicorn", "-w", "1", "--threads", "2", "-b", "0.0.0.0:5000", "--timeout", "300", "--max-requests", "100", "--max-requests-jitter", "20", "--preload", "app:app"]
+# Default command to run the app via gunicorn with aggressive memory optimizations
+# For 512MB RAM constraint:
+# - Use 1 worker, 1 thread (minimal footprint)
+# - --timeout 300 for slow model loading on first request  
+# - --max-requests 50 to recycle worker frequently and prevent memory leaks
+# - --max-requests-jitter 10 for randomized worker recycling
+# - --preload to load model once before forking (saves memory)
+# - --worker-tmp-dir /dev/shm to use RAM for temporary files (faster)
+CMD ["gunicorn", "-w", "1", "--threads", "1", "-b", "0.0.0.0:5000", "--timeout", "300", "--max-requests", "50", "--max-requests-jitter", "10", "--worker-tmp-dir", "/dev/shm", "--preload", "app:app"]

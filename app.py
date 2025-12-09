@@ -61,11 +61,17 @@ def load_model():
         learn = load_learner(model_path, cpu=True)
         print(f"[MODEL SUCCESS] FastAI model loaded successfully")
         print(f"[MODEL] Model vocab: {learn.dls.vocab if hasattr(learn, 'dls') else 'N/A'}")
+        
+        # Aggressive memory cleanup after loading
+        gc.collect()
+        print(f"[MODEL] Memory cleanup completed")
+        
         return learn
     except Exception as e:
         print(f"[MODEL ERROR] Failed to load model: {e}")
         traceback.print_exc()
         learn = None
+        gc.collect()
         return None
 
 # NOTE: Do NOT load heavy ML libraries at module import time. Flask's CLI
@@ -160,6 +166,10 @@ def is_coffee_leaf(image_path):
             
             print(f"[COFFEE LEAF CHECK] Is Leaf: {is_leaf}")
             print(f"[COFFEE LEAF CHECK] Confidence: {confidence:.3f}")
+            
+            # Clean up numpy arrays
+            del arr, r, g, b, green_dominant, saturation
+            gc.collect()
             
             return is_leaf, confidence
             
@@ -292,19 +302,32 @@ def upload():
             img_resized = img.resize((224, 224))
             to_tensor = transforms.ToTensor()
             img_tensor = to_tensor(img_resized)
+            
+            # Delete intermediate objects immediately
+            del img, img_resized, to_tensor
+            
             normalize = transforms.Normalize(
                 mean=[0.485, 0.456, 0.406],
                 std=[0.229, 0.224, 0.225]
             )
             img_normalized = normalize(img_tensor)
+            del img_tensor, normalize  # Free memory
+            
             img_batch = img_normalized.unsqueeze(0)
+            del img_normalized  # Free memory
 
-            preds = learn.model(img_batch)
-            probs = torch.softmax(preds, dim=1)
-
-            pred_idx = torch.argmax(probs, dim=1).item()
+            # Run prediction with no_grad to save memory
+            with torch.no_grad():
+                preds = learn.model(img_batch)
+                probs = torch.softmax(preds, dim=1)
+                pred_idx = torch.argmax(probs, dim=1).item()
+                max_prob = float(probs[0, pred_idx])
+            
             pred_class = learn.dls.vocab[pred_idx]
-            max_prob = float(probs[0, pred_idx])
+            
+            # Free tensors immediately after getting values
+            del img_batch, preds, probs
+            gc.collect()
 
             CONFIDENCE_THRESHOLD = 0.70
 
@@ -323,17 +346,21 @@ def upload():
 
             confidence = f"{max_prob*100:.2f}%"
             flash("Analysis completed successfully!", 'success')
-            
-            # Free memory immediately after prediction
-            del img_tensor, img_normalized, img_batch, preds, probs
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
 
         except Exception as e:
             flash(f"Prediction error: {str(e)}", 'error')
-            # Clean up on error too
+            traceback.print_exc()
+        finally:
+            # Aggressive cleanup after every prediction
             gc.collect()
+            
+            # Delete uploaded file to save disk space
+            try:
+                if filepath and os.path.exists(filepath):
+                    os.remove(filepath)
+                    print(f"[CLEANUP] Deleted uploaded file: {filepath}")
+            except Exception as e:
+                print(f"[CLEANUP WARNING] Could not delete file: {e}")
 
     return render_template(
         "upload.html",
