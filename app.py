@@ -2,11 +2,15 @@ import os
 import pathlib
 import traceback
 import sys
+import gc
 from PIL import Image
 import numpy as np
 import torch
 import torchvision.transforms as transforms
-from torchvision import models
+
+# Load environment variables from .env file (if it exists)
+from dotenv import load_dotenv
+load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -28,12 +32,17 @@ print("INITIALIZING APPLICATION")
 print("="*60)
 
 learn = None
-coffee_leaf_model = None
 
 def load_model():
     global learn
     global PILImage, load_learner
     model_path = os.path.join("model", "my_custom_cnn_windows.pkl")
+    
+    # Return early if already loaded
+    if learn is not None:
+        print(f"[MODEL] Model already loaded, skipping...")
+        return learn
+    
     print(f"[MODEL] Loading model from: {model_path}")
     
     if not os.path.exists(model_path):
@@ -63,22 +72,6 @@ def load_model():
         learn = None
         return None
 
-def load_coffee_leaf_detector():
-    """
-    Load a pre-trained ResNet model for general feature extraction.
-    """
-    global coffee_leaf_model
-    try:
-        print(f"[COFFEE DETECTOR] Loading coffee leaf detector...")
-        coffee_leaf_model = models.resnet50(pretrained=True)
-        coffee_leaf_model.eval()
-        print(f"[COFFEE DETECTOR] ✓ Coffee leaf detector loaded")
-        return coffee_leaf_model
-    except Exception as e:
-        print(f"[COFFEE DETECTOR ERROR] Failed to load: {e}")
-        coffee_leaf_model = None
-        return None
-
 # NOTE: Do NOT load heavy ML libraries at module import time. Flask's CLI
 # imports the app module for commands like `flask db init`. Loading FastAI
 # or torchvision weights during import can cause errors or slow startup.
@@ -98,6 +91,19 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+# Preload ML model when app starts (for gunicorn --preload-app)
+@app.before_request
+def preload_model_once():
+    """Preload model on first request to avoid worker timeouts during import."""
+    if not hasattr(preload_model_once, '_loaded'):
+        print("[STARTUP] First request detected - preloading ML model...")
+        load_model()
+        preload_model_once._loaded = True
+        if learn is not None:
+            print("[STARTUP] ✓ ML model preloaded successfully")
+        else:
+            print("[STARTUP] ⚠ ML model failed to preload")
 
 # User Model
 class User(db.Model):
@@ -321,9 +327,17 @@ def upload():
 
             confidence = f"{max_prob*100:.2f}%"
             flash("Analysis completed successfully!", 'success')
+            
+            # Free memory immediately after prediction
+            del img_tensor, img_normalized, img_batch, preds, probs
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         except Exception as e:
             flash(f"Prediction error: {str(e)}", 'error')
+            # Clean up on error too
+            gc.collect()
 
     return render_template(
         "upload.html",

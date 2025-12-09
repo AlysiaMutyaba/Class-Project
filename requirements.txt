@@ -3,7 +3,8 @@
 -f https://download.pytorch.org/whl/cpu/torch_stable.html
 torch==2.2.0+cpu
 torchvision==0.17.0+cpu
-torchaudio==2.2.0+cpu
+# Remove torchaudio to save memory (not used in this project)
+# torchaudio==2.2.0+cpu
 fastai==2.7.14
 
 Flask==2.3.3
@@ -13,11 +14,12 @@ SQLAlchemy==2.0.21
 
 Pillow
 numpy<2
-pandas
-scikit-learn
-scipy
-matplotlib
-requests
+# Remove unused heavy dependencies to save memory
+# pandas
+# scikit-learn
+# scipy
+# matplotlib
+# requests
 PyYAML
 cloudpickle
 gunicorn

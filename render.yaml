@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: agropredict
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 1 --threads 2 -b 0.0.0.0:$PORT --timeout 300 --max-requests 100 --max-requests-jitter 20 --preload app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: SQLALCHEMY_DATABASE_URI
+        fromDatabase:
+          name: agropredict-db
+          property: connectionString
+    # Memory optimization hints
+    plan: free
+    healthCheckPath: /
