@@ -21,17 +21,6 @@ from werkzeug.utils import secure_filename
 PILImage = None
 load_learner = None
 
-# Fix Windows path issue ONLY on Windows hosts
-# Don't apply this on Linux/POSIX systems as it causes import errors
-if os.name == 'nt' or sys.platform.startswith('win'):
-    try:
-        pathlib.PosixPath = pathlib.WindowsPath
-        print("[SYSTEM] Applied Windows pathlib override")
-    except Exception as e:
-        print(f"[SYSTEM] Could not apply pathlib override: {e}")
-else:
-    print("[SYSTEM] Running on POSIX system, no pathlib override needed")
-
 print("="*60)
 print("INITIALIZING APPLICATION")
 print("="*60)
@@ -42,34 +31,20 @@ def load_model():
     global learn
     global PILImage, load_learner
     
-    # Try Linux/POSIX model first, fallback to Windows model
-    model_paths = [
-        os.path.join("model", "my_custom_cnn.pkl"),
-        os.path.join("model", "my_custom_cnn_windows.pkl")
-    ]
-    
     # Return early if already loaded
     if learn is not None:
         print(f"[MODEL] Model already loaded, skipping...")
         return learn
     
-    model_path = None
-    for path in model_paths:
-        if os.path.exists(path):
-            model_path = path
-            break
-    
-    if model_path is None:
-        print(f"[MODEL ERROR] No model file found. Tried: {model_paths}")
-        learn = None
-        return None
-    
-    print(f"[MODEL] Loading model from: {model_path}")
+    # Use Linux model (for production/Docker)
+    model_path = os.path.join("model", "my_custom_cnn.pkl")
     
     if not os.path.exists(model_path):
         print(f"[MODEL ERROR] Model file not found at: {model_path}")
         learn = None
         return None
+    
+    print(f"[MODEL] Loading model from: {model_path}")
     
     # Import fastai lazily so the app can start even if fastai/torch imports fail
     try:

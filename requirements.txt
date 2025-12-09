@@ -23,6 +23,7 @@ numpy<2
 PyYAML
 cloudpickle
 gunicorn
+fasttransform
 
 python-dotenv
 
